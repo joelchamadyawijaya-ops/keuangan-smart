@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fintech Super App</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+ --bg:#0b1220;
+ --card:rgba(255,255,255,0.05);
+ --text:#e2e8f0;
+ --accent:#6366f1;
+}
+.light{
+ --bg:#f8fafc;
+ --card:#fff;
+ --text:#0f172a;
+}
+body{
+ margin:0;
+ font-family:Inter, sans-serif;
+ background:linear-gradient(135deg,#0f172a,#1e293b);
+ color:var(--text);
+ display:flex;
+}
+
+/* sidebar */
+.sidebar{
+ width:220px;
+ height:100vh;
+ padding:20px;
+ background:rgba(255,255,255,0.05);
+ backdrop-filter:blur(10px);
+}
+
+/* main */
+.main{
+ flex:1;
+ padding:20px;
+}
+
+/* card */
+.card{
+ background:var(--card);
+ padding:20px;
+ border-radius:16px;
+ backdrop-filter:blur(10px);
+}
+
+/* grid */
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+ gap:20px;
+}
+
+/* input */
+input,select{
+ width:100%;
+ padding:10px;
+ margin-top:10px;
+ border:none;
+ border-radius:10px;
+}
+
+/* badge */
+.badge{
+ padding:6px 12px;
+ border-radius:20px;
+ font-weight:bold;
+}
+.hemat{background:#22c55e;}
+.normal{background:#eab308;}
+.boros{background:#ef4444;}
+
+/* auth */
+.auth{
+ max-width:300px;
+ margin:100px auto;
+}
+
+/* notif */
+#notif{
+ position:fixed;
+ bottom:20px;
+ right:20px;
+ background:#6366f1;
+ padding:10px;
+ border-radius:10px;
+ display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>💰 Fintech</h2>
+  <button onclick="toggleMode()">🌗 Mode</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div class="main">
+
+<!-- AUTH -->
+<div id="authBox" class="auth card">
+  <h3 id="authTitle">Login</h3>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="auth()">Submit</button>
+  <p onclick="toggleAuth()">Switch Login/Register</p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="app" style="display:none">
+
+<div class="grid">
+
+<div class="card">
+<h3>Saldo</h3>
+<h1 id="saldo">0</h1>
+<span id="badge" class="badge normal">Normal</span>
+</div>
+
+<div class="card">
+<h3>Rekening</h3>
+<select id="account"></select>
+<input id="newAcc" placeholder="Tambah rekening">
+<button onclick="addAccount()">Tambah</button>
+</div>
+
+<div class="card">
+<h3>Kurs</h3>
+USD: <span id="usd"></span><br>
+EUR: <span id="eur"></span>
+</div>
+
+<div class="card">
+<h3>Converter</h3>
+<input id="amount" type="number">
+<select id="from"><option>IDR</option><option>USD</option></select>
+<select id="to"><option>USD</option><option>IDR</option></select>
+<button onclick="convert()">Convert</button>
+<p id="result"></p>
+</div>
+
+<div class="card">
+<h3>Pengeluaran</h3>
+<input id="expense" type="number">
+<button onclick="addExpense()">Tambah</button>
+</div>
+
+<div class="card">
+<h3>Statistik</h3>
+<canvas id="chart"></canvas>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<div id="notif"></div>
+
+<script>
+let isLogin=true;
+let expense=0;
+let data=[1000000,2000000];
+let rates={};
+
+/* AUTH */
+function toggleAuth(){
+ isLogin=!isLogin;
+ authTitle.innerText=isLogin?"Login":"Register";
+}
+function auth(){
+ let u=user.value;
+ let p=pass.value;
+
+ if(isLogin){
+   if(localStorage.getItem(u)==p){
+     startApp();
+   }else alert("Login gagal");
+ }else{
+   localStorage.setItem(u,p);
+   alert("Register sukses");
+ }
+}
+
+/* START */
+function startApp(){
+ authBox.style.display="none";
+ app.style.display="block";
+ loadAccounts();
+}
+
+/* LOGOUT */
+function logout(){
+ location.reload();
+}
+
+/* MODE */
+function toggleMode(){
+ document.body.classList.toggle("light");
+}
+
+/* NOTIF */
+function notif(msg){
+ notifBox.innerText=msg;
+ notifBox.style.display="block";
+ setTimeout(()=>notifBox.style.display="none",2000);
+}
+let notifBox=document.getElementById("notif");
+
+/* ACCOUNT */
+function addAccount(){
+ let val=newAcc.value;
+ let acc=JSON.parse(localStorage.getItem("acc")||"[]");
+ acc.push(val);
+ localStorage.setItem("acc",JSON.stringify(acc));
+ loadAccounts();
+}
+function loadAccounts(){
+ let acc=JSON.parse(localStorage.getItem("acc")||"[]");
+ account.innerHTML="";
+ acc.forEach(a=>{
+  let o=document.createElement("option");
+  o.text=a;
+  account.add(o);
+ });
+}
+
+/* EXPENSE */
+function addExpense(){
+ let val=Number(expenseInput.value);
+ expense+=val;
+ data.push(val);
+ chart.update();
+ updateBadge();
+}
+
+/* BADGE */
+function updateBadge(){
+ if(expense<2000000){
+  badge.className="badge hemat"; badge.innerText="Hemat";
+ }else if(expense<5000000){
+  badge.className="badge normal"; badge.innerText="Normal";
+ }else{
+  badge.className="badge boros"; badge.innerText="Boros";
+  notif("⚠️ Boros!");
+ }
+}
+
+/* API */
+async function getRates(){
+ let r=await fetch("https://api.exchangerate-api.com/v4/latest/IDR");
+ let d=await r.json();
+ rates=d.rates;
+ usd.innerText=d.rates.USD;
+ eur.innerText=d.rates.EUR;
+}
+getRates();
+
+/* CONVERT */
+function convert(){
+ let res=(amount.value / rates[from.value]) * rates[to.value];
+ result.innerText=res.toFixed(2);
+}
+
+/* CHART */
+let chart=new Chart(chart, {
+ type:'line',
+ data:{
+  labels:["Jan","Feb","Mar"],
+  datasets:[{
+   label:"Expense",
+   data:data,
+   borderColor:"#6366f1"
+  }]
+ }
+});
+
+/* FIX INPUT */
+let expenseInput=document.getElementById("expense");
+</script>
+
+</body>
+</html>
