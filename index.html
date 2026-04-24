@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard cuaca real-time dengan data dari OpenWeatherMap API">
+    <meta name="keywords" content="cuaca, weather, forecast, dashboard">
+    <title>Weather Dashboard - Cuaca Real-time</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-cloud-sun"></i> Weather Dashboard</h1>
+                <p>Pantau Cuaca Real-time di Seluruh Dunia</p>
+            </div>
+        </header>
+
+        <!-- SEARCH SECTION -->
+        <div class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Cari nama kota (contoh: Jakarta, Bangkok, London...)"
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="btn-search">
+                    <i class="fas fa-search"></i> Cari
+                </button>
+                <button id="locationBtn" class="btn-location">
+                    <i class="fas fa-location-dot"></i> Lokasi Saya
+                </button>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+
+        <!-- LOADING SPINNER -->
+        <div id="loadingSpinner" class="loading-spinner hidden">
+            <div class="spinner"></div>
+            <p>Mengambil data cuaca...</p>
+        </div>
+
+        <!-- WELCOME SECTION -->
+        <div id="welcomeSection" class="welcome-section">
+            <div class="welcome-card">
+                <i class="welcome-icon fas fa-cloud"></i>
+                <h2>Selamat Datang di Weather Dashboard</h2>
+                <p>Dapatkan informasi cuaca terkini untuk kota pilihan Anda dengan data real-time dari OpenWeatherMap</p>
+                
+                <div class="welcome-features">
+                    <div class="feature">
+                        <i class="fas fa-temperature-high"></i>
+                        <span>Suhu Real-time & Kondisi Cuaca</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-clock"></i>
+                        <span>Prakiraan Per Jam (24 Jam)</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-calendar-days"></i>
+                        <span>Prakiraan 5 Hari ke Depan</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-location-dot"></i>
+                        <span>Lokasi Otomatis Berbasis GPS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div id="mainContent" class="main-content hidden">
+            <!-- CURRENT WEATHER CARD -->
+            <div class="current-weather-section">
+                <div class="current-weather-card">
+                    <div class="location-info">
+                        <div class="city-name" id="cityName">Memuat...</div>
+                        <div class="date-time" id="dateTime"></div>
+                    </div>
+
+                    <div class="weather-display">
+                        <div class="weather-icon-large" id="weatherIcon">
+                            <i class="fas fa-cloud"></i>
+                        </div>
+                        <div class="temperature-display">
+                            <div class="temperature">
+                                <span class="temp-value" id="temperature">--</span>
+                                <span class="temp-unit">°C</span>
+                            </div>
+                            <div class="weather-description" id="weatherDescription">-</div>
+                        </div>
+                    </div>
+
+                    <div class="weather-details">
+                        <div class="detail-card">
+                            <i class="fas fa-droplet"></i>
+                            <div class="detail-content">
+                                <div class="detail-label">Kelembaban</div>
+                                <div class="detail-value" id="humidity">-</div>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-wind"></i>
+                            <div class="detail-content">
+                                <div class="detail-label">Kecepatan Angin</div>
+                                <div class="detail-value" id="windSpeed">-</div>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-gauge"></i>
+                            <div class="detail-content">
+                                <div class="detail-label">Tekanan Udara</div>
+                                <div class="detail-value" id="pressure">-</div>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <i class="fas fa-eye"></i>
+                            <div class="detail-content">
+                                <div class="detail-label">Jarak Pandang</div>
+                                <div class="detail-value" id="visibility">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOURLY FORECAST SECTION -->
+            <div class="forecast-section">
+                <h3>
+                    <i class="fas fa-hourglass-end"></i> Prakiraan Per Jam (24 Jam)
+                </h3>
+                <div id="hourlyForecast" class="hourly-forecast">
+                    <div class="hourly-card">
+                        <div class="hourly-time">-</div>
+                        <div class="hourly-icon"><i class="fas fa-cloud"></i></div>
+                        <div class="hourly-temp">--°C</div>
+                        <div class="hourly-desc">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5-DAY FORECAST SECTION -->
+            <div class="forecast-section">
+                <h3>
+                    <i class="fas fa-calendar"></i> Prakiraan 5 Hari
+                </h3>
+                <div id="fiveDayForecast" class="five-day-forecast">
+                    <div class="day-card">
+                        <div class="day-name">-</div>
+                        <div class="day-date">-</div>
+                        <div class="day-icon"><i class="fas fa-cloud"></i></div>
+                        <div class="day-temps">
+                            <span class="day-temp-max">--°</span>
+                            <span class="day-temp-min">--°</span>
+                        </div>
+                        <div class="day-description">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADDITIONAL INFORMATION -->
+            <div class="additional-info">
+                <div class="info-card">
+                    <h4>
+                        <i class="fas fa-sun"></i> UV Index
+                    </h4>
+                    <div class="info-value" id="uvIndex">-</div>
+                </div>
+                <div class="info-card">
+                    <h4>
+                        <i class="fas fa-sunrise"></i> Sunrise
+                    </h4>
+                    <div class="info-value" id="sunrise">-</div>
+                </div>
+                <div class="info-card">
+                    <h4>
+                        <i class="fas fa-sunset"></i> Sunset
+                    </h4>
+                    <div class="info-value" id="sunset">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <p>&copy; 2026 Weather Dashboard | Data dari OpenWeatherMap API | Dibuat dengan <i class="fas fa-heart" style="color: #e74c3c;"></i></p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
